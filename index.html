@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instituto Solidariedade - Ajude Dona Josefa</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
+  color: #333;
+}
+
+header {
+  background: #1d3557;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.container {
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+h2 { color: #e63946; }
+
+.counter {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2a9d8f;
+  margin-top: 10px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 15px;
+  border: none;
+  border-radius: 6px;
+  background: #e63946;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover { background: #c92c3d; }
+
+.secure {
+  font-size: 13px;
+  margin-top: 15px;
+  color: #555;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: #888;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Instituto Solidariedade</h1>
+  <p>Ajude Dona Josefa ❤️</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Sobre a campanha</h2>
+    <p>Dona Josefa precisa de apoio para despesas médicas e alimentação.</p>
+    <div class="counter">
+      Total arrecadado: R$ <span id="contador">12345.00</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Faça sua doação</h2>
+
+    <input type="number" id="valor" placeholder="Valor entre 1 e 1000" min="1" max="1000">
+
+    <select id="metodo">
+      <option value="pix">PIX</option>
+      <option value="card">Cartão de Crédito</option>
+    </select>
+
+    <button onclick="pagar()">Contribuir Agora</button>
+
+    <div class="secure">
+      🔒 Pagamento seguro via ElitePay<br>
+      ✔️ Certificado SSL Ativo<br>
+      ✔️ Ambiente protegido
+    </div>
+
+    <div id="resultado"></div>
+  </div>
+
+</div>
+
+<footer>
+© 2026 Instituto Solidariedade • Todos os direitos reservados
+</footer>
+
+<script>
+async function pagar() {
+  const valor = document.getElementById("valor").value;
+  const metodo = document.getElementById("metodo").value;
+
+  if (!valor || valor < 1 || valor > 1000) {
+    alert("Valor deve ser entre 1 e 1000");
+    return;
+  }
+
+  const response = await fetch("/.netlify/functions/criar-pagamento", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount: valor, method })
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    alert(data.error);
+    return;
+  }
+
+  if (metodo === "pix") {
+    document.getElementById("resultado").innerHTML = `
+      <p><strong>PIX Gerado:</strong></p>
+      <textarea style="width:100%;height:80px;">${data.copyPaste}</textarea>
+      <button onclick="baixarComprovante('${valor}')">Baixar Comprovante</button>
+    `;
+  } else {
+    window.location.href = data.checkoutUrl;
+  }
+
+  atualizarContador(valor);
+}
+
+function atualizarContador(valor) {
+  let atual = parseFloat(document.getElementById("contador").innerText);
+  atual += parseFloat(valor);
+  document.getElementById("contador").innerText = atual.toFixed(2);
+}
+
+function baixarComprovante(valor) {
+  window.open("/.netlify/functions/gerar-comprovante?valor=" + valor);
+}
+</script>
+
+</body>
+</html>
